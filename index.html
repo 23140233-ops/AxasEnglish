@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutor IA - Entrevista Universitaria (Will & Going To)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'pulse-ring': 'pulseRing 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite',
+            'sound-wave': 'soundWave 0.9s ease-in-out infinite',
+          },
+          keyframes: {
+            pulseRing: {
+              '0%': { transform: 'scale(0.95)', opacity: '0.7' },
+              '70%': { transform: 'scale(1.25)', opacity: '0' },
+              '100%': { transform: 'scale(0.95)', opacity: '0' },
+            },
+            soundWave: {
+              '0%, 100%': { height: '6px' },
+              '50%': { height: '22px' },
+            }
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Toast Notification Container (Replaces alert/confirm) -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+          <!-- Graduation Cap SVG -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">UniPrep AI Tutor</h1>
+          <p class="text-xs text-slate-500 hidden sm:block">Speaking Lab: <span class="font-semibold text-emerald-600">going to</span> vs. <span class="font-semibold text-indigo-600">will</span></p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- AI Engine / API Key Settings Button -->
+        <button id="api-mode-btn" type="button" onclick="openApiModal()" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition flex items-center gap-1.5 text-xs sm:text-sm font-medium" title="Configurar modo de conexión IA">
+          <span id="ai-mode-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="ai-mode-label" class="hidden sm:inline">Tutor Listo</span>
+        </button>
+
+        <!-- Voice Audio Toggle -->
+        <button id="toggle-audio-btn" type="button" onclick="toggleAudioOutput()" class="p-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition flex items-center gap-2 text-xs sm:text-sm font-medium" title="Activar/Desactivar voz de la entrevistadora">
+          <span id="audio-icon-on">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+          </span>
+          <span id="audio-icon-off" class="hidden">
+            <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
+            </svg>
+          </span>
+          <span class="hidden md:inline" id="audio-status-label">Voz IA Activa</span>
+        </button>
+
+        <!-- End / Reset Interview Button (Visible during active interview) -->
+        <button id="end-interview-btn" type="button" onclick="finishInterviewEarly()" class="hidden px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition shadow-xs">
+          Ver Reporte
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Optional API Key Modal for External Devices -->
+  <div id="api-modal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-bold text-slate-900 text-base">Configuración de Conexión IA</h3>
+        <button type="button" onclick="closeApiModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100">✕</button>
+      </div>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        Si abres esta app en otro dispositivo sin conexión a Gemini, el <strong>Modo Tutor Autónomo</strong> funcionará automáticamente con voz en inglés y evaluación gramatical.
+      </p>
+      <p class="text-xs text-slate-500 leading-relaxed">
+        Opcionalmente, puedes pegar una clave gratuita de <strong>Google AI Studio</strong> para activar respuestas generativas ilimitadas en este dispositivo:
+      </p>
+      <div>
+        <label for="custom-api-key-input" class="block text-xs font-semibold text-slate-700 mb-1.5">Gemini API Key (Opcional)</label>
+        <input id="custom-api-key-input" type="password" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 outline-none text-sm" />
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button type="button" onclick="clearCustomApiKey()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Usar Modo Autónomo</button>
+        <button type="button" onclick="saveCustomApiKey()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white">Guardar Clave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ==================== VIEW 1: SETUP / ONBOARDING ==================== -->
+    <section id="setup-view" class="max-w-3xl mx-auto">
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Hero Banner -->
+        <div class="bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-10 text-white">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-medium mb-4">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            Simulador de Admisión Universitaria • Inglés (Speaking)
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight mb-3">
+            Prepárate para tu entrevista universitaria dominando el futuro en inglés
+          </h2>
+          <p class="text-indigo-100 text-sm sm:text-base leading-relaxed">
+            Conversa en tiempo real con la <strong class="text-white">Dra. Eleanor Vance</strong>, oficial de admisiones. Practicarás cuándo usar <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-200 font-semibold">going to</span> (planes e intenciones) y <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 font-semibold">will</span> (promesas, predicciones y decisiones espontáneas).
+          </p>
+        </div>
+
+        <!-- Setup Form -->
+        <div class="p-6 sm:p-8 space-y-6">
+          <!-- Student Name -->
+          <div>
+            <label for="student-name" class="block text-sm font-semibold text-slate-700 mb-2">Tu nombre (opcional)</label>
+            <input id="student-name" type="text" placeholder="Ej. Sofía, Carlos, Alex..." class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm transition" />
+          </div>
+
+          <!-- Career / Major Selection -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">¿A qué carrera o área deseas postular?</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="major-options">
+              <button type="button" onclick="selectMajor(this, 'Computer Science & Artificial Intelligence')" class="major-btn active-major text-left p-4 rounded-2xl border-2 border-indigo-600 bg-indigo-50/60 transition flex items-start gap-3">
+                <span class="text-xl">💻</span>
+                <div>
+                  <div class="font-semibold text-slate-900 text-sm">Ingeniería en Computación e IA</div>
+                  <div class="text-xs text-slate-500">Computer Science & AI</div>
+                </div>
+              </button>
+              <button type="button" onclick="selectMajor(this, 'Medicine & Biomedical Sciences')" class="major-btn text-left p-4 rounded-2xl border border-slate-200 hover:border-indigo-300 bg-white transition flex items-start gap-3">
+                <span class="text-xl">🩺</span>
+                <div>
+                  <div class="font-semibold text-slate-900 text-sm">Medicina y Ciencias de la Salud</div>
+                  <div class="text-xs text-slate-500">Medicine & Health</div>
+                </div>
+              </button>
+              <button type="button" onclick="selectMajor(this, 'International Business & Economics')" class="major-btn text-left p-4 rounded-2xl border border-slate-200 hover:border-indigo-300 bg-white transition flex items-start gap-3">
+                <span class="text-xl">📈</span>
+                <div>
+                  <div class="font-semibold text-slate-900 text-sm">Negocios Internacionales y Economía</div>
+                  <div class="text-xs text-slate-500">Business & Economics</div>
+                </div>
+              </button>
+              <button type="button" onclick="selectMajor(this, 'Architecture, Design & Sustainability')" class="major-btn text-left p-4 rounded-2xl border border-slate-200 hover:border-indigo-300 bg-white transition flex items-start gap-3">
+                <span class="text-xl">🏛️</span>
+                <div>
+                  <div class="font-semibold text-slate-900 text-sm">Arquitectura, Diseño y Sostenibilidad</div>
+                  <div class="text-xs text-slate-500">Architecture & Design</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- English Level Selection -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Nivel de inglés deseado</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button type="button" onclick="selectLevel(this, 'B1 Intermediate')" class="level-btn active-level p-3.5 rounded-2xl border-2 border-indigo-600 bg-indigo-50/60 text-left transition">
+                <div class="font-semibold text-sm text-slate-900">B1 — Intermedio (Guiado)</div>
+                <div class="text-xs text-slate-500 mt-0.5">Preguntas claras, vocabulario accesible y pistas detalladas.</div>
+              </button>
+              <button type="button" onclick="selectLevel(this, 'B2 Upper-Intermediate')" class="level-btn p-3.5 rounded-2xl border border-slate-200 hover:border-indigo-300 bg-white text-left transition">
+                <div class="font-semibold text-sm text-slate-900">B2 — Intermedio Alto (Desafiante)</div>
+                <div class="text-xs text-slate-500 mt-0.5">Preguntas de seguimiento más profundas y fluidez académica.</div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Grammar Cheat Sheet Preview -->
+          <div class="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="bg-white p-3.5 rounded-xl border border-emerald-200">
+              <div class="flex items-center gap-2 font-bold text-emerald-700 text-xs uppercase tracking-wider mb-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                BE GOING TO (Planes previos)
+              </div>
+              <p class="text-xs text-slate-600 mb-2">Úsalo para metas decididas antes de la entrevista, proyectos planeados e intenciones.</p>
+              <p class="text-xs font-medium text-slate-800 bg-emerald-50 p-2 rounded-lg italic">"I <strong>am going to</strong> join the robotics lab next semester."</p>
+            </div>
+            <div class="bg-white p-3.5 rounded-xl border border-amber-200">
+              <div class="flex items-center gap-2 font-bold text-amber-700 text-xs uppercase tracking-wider mb-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                WILL (Promesas y Predicciones)
+              </div>
+              <p class="text-xs text-slate-600 mb-2">Úsalo para compromisos en el momento, promesas a la universidad y predicciones futuras.</p>
+              <p class="text-xs font-medium text-slate-800 bg-amber-50 p-2 rounded-lg italic">"I promise I <strong>will</strong> contribute actively to campus life."</p>
+            </div>
+          </div>
+
+          <!-- Start CTA -->
+          <button id="start-btn" type="button" onclick="startInterview()" class="w-full py-4 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold text-base shadow-md shadow-indigo-200 transition flex items-center justify-center gap-2">
+            <span>Comenzar Entrevista por Voz</span>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: ACTIVE INTERVIEW STUDIO ==================== -->
+    <section id="interview-view" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- Left / Main Column: Interviewer & Conversation Arena (8 cols on lg) -->
+      <div class="lg:col-span-8 flex flex-col gap-4">
+
+        <!-- Admissions Officer Card + Stage Progress -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <!-- Stylized Admissions Officer Avatar -->
+              <div class="relative shrink-0">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-100 to-slate-200 border border-indigo-200 flex items-center justify-center overflow-hidden">
+                  <svg class="w-11 h-11 text-indigo-900" viewBox="0 0 64 64" fill="none">
+                    <circle cx="32" cy="24" r="12" fill="#312E81"/>
+                    <path d="M14 56C14 44.9543 22.0589 38 32 38C41.9411 38 50 44.9543 50 56" fill="#4338CA"/>
+                    <circle cx="32" cy="25" r="9" fill="#FDE68A"/>
+                    <path d="M23 23C23 17 27 13 32 13C37 13 41 17 41 23" stroke="#1E1B4B" stroke-width="4" stroke-linecap="round"/>
+                  </svg>
+                </div>
+                <span id="interviewer-online-dot" class="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-white"></span>
+              </div>
+
+              <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h2 class="font-bold text-slate-900 text-base">Dr. Eleanor Vance</h2>
+                  <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold">Admissions Officer</span>
+                </div>
+                <p id="selected-major-badge" class="text-xs text-slate-500 mt-0.5">Computer Science & Artificial Intelligence • B1 Intermediate</p>
+
+                <!-- Animated Speaking Sound Wave -->
+                <div id="speaking-indicator" class="hidden items-center gap-1.5 mt-1.5 text-xs font-semibold text-indigo-600">
+                  <div class="flex items-end gap-0.5 h-5">
+                    <span class="w-1 bg-indigo-600 rounded-full animate-sound-wave" style="animation-delay: 0s"></span>
+                    <span class="w-1 bg-indigo-600 rounded-full animate-sound-wave" style="animation-delay: 0.2s"></span>
+                    <span class="w-1 bg-indigo-600 rounded-full animate-sound-wave" style="animation-delay: 0.4s"></span>
+                    <span class="w-1 bg-indigo-600 rounded-full animate-sound-wave" style="animation-delay: 0.1s"></span>
+                  </div>
+                  <span>Hablando en inglés...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Stage Progress & Replay Audio -->
+            <div class="flex sm:flex-col items-center sm:items-end justify-between gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xs font-semibold text-slate-500">Etapa</span>
+                <span id="stage-badge" class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-xs font-bold">1 / 5</span>
+              </div>
+              <button id="replay-audio-btn" type="button" onclick="replayLastQuestion()" class="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Escuchar de nuevo</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="w-full bg-slate-100 h-1.5 rounded-full mt-4 overflow-hidden">
+            <div id="stage-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-500" style="width: 20%"></div>
+          </div>
+        </div>
+
+        <!-- Conversation Transcript Feed -->
+        <div id="chat-feed" class="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200 shadow-xs space-y-5 min-h-[340px] max-h-[460px] overflow-y-auto">
+          <!-- Messages dynamically injected here -->
+        </div>
+
+        <!-- Next Turn Speaking Hint Banner -->
+        <div id="hint-banner" class="bg-indigo-50/90 border border-indigo-200 rounded-2xl p-3.5 sm:p-4 flex items-start gap-3">
+          <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 mt-0.5">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div class="text-xs sm:text-sm text-indigo-950">
+            <span class="font-bold text-indigo-800 block mb-0.5">Sugerencia para tu respuesta:</span>
+            <p id="hint-text" class="text-indigo-900 leading-relaxed">Cargando pregunta de la entrevistadora...</p>
+          </div>
+        </div>
+
+        <!-- Speaking & Input Control Deck -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <!-- Push / Toggle Mic Button -->
+            <button id="mic-btn" type="button" onclick="toggleRecording()" class="relative shrink-0 px-5 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm transition flex items-center justify-center gap-2.5 shadow-sm">
+              <span id="mic-pulse-ring" class="hidden absolute inset-0 rounded-2xl bg-rose-500 animate-pulse-ring"></span>
+              <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              <span id="mic-btn-label" class="relative z-10">Hablar (Inglés)</span>
+            </button>
+
+            <!-- Live Transcript / Editable Textbox -->
+            <div class="flex-1 relative">
+              <textarea id="student-input" rows="2" placeholder="Presiona 'Hablar' para responder con tu voz, o escribe tu respuesta en inglés aquí..." class="w-full px-4 py-2.5 rounded-2xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm resize-none transition"></textarea>
+              <div id="interim-speech-badge" class="hidden absolute bottom-2 right-3 text-[11px] font-medium text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md">
+                Escuchando...
+              </div>
+            </div>
+
+            <!-- Send Answer Button -->
+            <button id="send-btn" type="button" onclick="submitStudentTurn()" class="shrink-0 px-5 py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm transition flex items-center justify-center gap-2 shadow-sm">
+              <span>Enviar</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+            <span id="speech-support-status">Reconocimiento de voz (en-US) listo</span>
+            <span>Tip: Combina <strong class="text-emerald-600">going to</strong> y <strong class="text-amber-600">will</strong> cuando sea natural</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Grammar Coach & Quick Reference (4 cols on lg) -->
+      <aside class="lg:col-span-4 space-y-4">
+
+        <!-- Grammar Usage Counters -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Uso de Estructuras en Vivo</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200/80">
+              <div class="text-xs font-bold text-emerald-800">GOING TO</div>
+              <div class="text-2xl font-extrabold text-emerald-700 mt-0.5" id="count-going-to">0</div>
+              <div class="text-[11px] text-emerald-600 mt-0.5">Planes / Intenciones</div>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80">
+              <div class="text-xs font-bold text-amber-800">WILL</div>
+              <div class="text-2xl font-extrabold text-amber-700 mt-0.5" id="count-will">0</div>
+              <div class="text-[11px] text-amber-600 mt-0.5">Promesas / Predicciones</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Feedback Card -->
+        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-xs space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+              Coach de Gramática y Speaking
+            </h3>
+            <span id="turn-score-badge" class="hidden px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+              -- / 100
+            </span>
+          </div>
+
+          <div id="feedback-empty-state" class="text-xs text-slate-500 bg-slate-50 rounded-2xl p-4 border border-slate-100 leading-relaxed">
+            Responde la primera pregunta de la Dra. Vance en inglés. Aquí analizaré tu precisión con <strong>will</strong> y <strong>going to</strong> y te daré una versión mejorada de tu respuesta.
+          </div>
+
+          <div id="feedback-content" class="hidden space-y-3.5">
+            <!-- Detected Phrases Chips -->
+            <div id="detected-chips-container" class="flex flex-wrap gap-1.5"></div>
+
+            <!-- Spanish Pedagogical Explanation -->
+            <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">Análisis del Tutor</div>
+              <p id="feedback-es-text" class="text-xs sm:text-sm text-slate-700 leading-relaxed"></p>
+            </div>
+
+            <!-- Model Improved Version -->
+            <div class="bg-indigo-50/70 rounded-2xl p-3.5 border border-indigo-200/80">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Ejemplo Natural (Nivel B2/C1)</span>
+                <button type="button" onclick="speakImprovedVersion()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                  <span>Oír</span>
+                </button>
+              </div>
+              <p id="improved-version-text" class="text-xs sm:text-sm font-medium text-indigo-950 italic leading-relaxed"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsible Quick Grammar Guide -->
+        <details class="bg-white rounded-3xl border border-slate-200 shadow-xs group" open>
+          <summary class="p-5 font-bold text-sm text-slate-900 cursor-pointer flex items-center justify-between list-none">
+            <span>📚 Guía Rápida: Will vs. Going to</span>
+            <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div class="px-5 pb-5 pt-1 space-y-3 text-xs text-slate-600 border-t border-slate-100">
+            <div>
+              <span class="font-bold text-emerald-700 block">1. Be going to + infinitivo</span>
+              <ul class="list-disc pl-4 mt-1 space-y-1">
+                <li><strong>Planes ya decididos:</strong> <em>"I'm going to specialize in data science."</em></li>
+                <li><strong>Evidencia presente:</strong> <em>"With these grades, I'm going to thrive."</em></li>
+              </ul>
+            </div>
+            <div>
+              <span class="font-bold text-amber-700 block">2. Will + infinitivo</span>
+              <ul class="list-disc pl-4 mt-1 space-y-1">
+                <li><strong>Promesas y compromisos:</strong> <em>"I will work hard every day."</em></li>
+                <li><strong>Decisiones espontáneas:</strong> <em>"That's a great point—I'll consider it."</em></li>
+                <li><strong>Predicciones / Opiniones:</strong> <em>"I believe AI will transform healthcare."</em></li>
+              </ul>
+            </div>
+          </div>
+        </details>
+
+      </aside>
+    </section>
+
+    <!-- ==================== VIEW 3: FINAL EVALUATION REPORT ==================== -->
+    <section id="report-view" class="hidden max-w-3xl mx-auto">
+      <div class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-gradient-to-r from-slate-900 to-indigo-900 p-6 sm:p-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-wider">Entrevista Completada</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold mt-2">Reporte de Desempeño</h2>
+            <p id="report-subtitle" class="text-indigo-200 text-sm mt-1">Evaluación de uso de futuro en inglés (Will & Going to)</p>
+          </div>
+          <div class="bg-white/10 border border-white/20 rounded-2xl p-4 text-center shrink-0">
+            <div class="text-xs text-indigo-200 font-medium">Puntuación Global</div>
+            <div id="final-score-value" class="text-3xl font-extrabold text-white mt-0.5">--%</div>
+          </div>
+        </div>
+
+        <div class="p-6 sm:p-8 space-y-6">
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
+              <div class="text-xs font-bold text-emerald-800 uppercase">Usos de "Going to"</div>
+              <div id="report-going-to" class="text-3xl font-extrabold text-emerald-700 my-1">0</div>
+              <div class="text-xs text-emerald-600">Planes e intenciones</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-center">
+              <div class="text-xs font-bold text-amber-800 uppercase">Usos de "Will"</div>
+              <div id="report-will" class="text-3xl font-extrabold text-amber-700 my-1">0</div>
+              <div class="text-xs text-amber-600">Promesas y predicciones</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 text-center">
+              <div class="text-xs font-bold text-indigo-800 uppercase">Turnos Hablados</div>
+              <div id="report-turns" class="text-3xl font-extrabold text-indigo-700 my-1">0</div>
+              <div class="text-xs text-indigo-600">Intercambios completos</div>
+            </div>
+          </div>
+
+          <!-- Detailed History Summary -->
+          <div>
+            <h3 class="font-bold text-slate-900 text-base mb-3">Resumen de tus intervenciones y mejoras</h3>
+            <div id="report-history-list" class="space-y-3"></div>
+          </div>
+
+          <!-- Restart Button -->
+          <div class="pt-2 flex flex-col sm:flex-row gap-3">
+            <button type="button" onclick="resetToSetup()" class="flex-1 py-3.5 px-6 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm transition shadow-sm">
+              Practicar Nueva Entrevista
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. APPLICATION STATE & CONFIGURATION
+    // =========================================================================
+    const apiKey = ""; // Runtime-provided API key
+    const TEXT_MODEL = "gemini-3-flash-preview";
+    const TTS_MODEL = "gemini-2.5-flash-preview-tts";
+
+    const state = {
+      studentName: "",
+      major: "Computer Science & Artificial Intelligence",
+      level: "B1 Intermediate",
+      customApiKey: "",
+      usingFallbackEngine: false,
+      preferredEnglishVoice: null,
+      audioEnabled: true,
+      isRecording: false,
+      isLoading: false,
+      currentStage: 1,
+      lastInterviewerText: "",
+      lastImprovedVersion: "",
+      totalGoingTo: 0,
+      totalWill: 0,
+      scores: [],
+      turnLogs: [], // Stores { question, studentAnswer, feedbackEs, improvedVersion, score }
+      conversationHistory: [] // Gemini contents array
+    };
+
+    let recognition = null;
+    let currentAudioElement = null;
+
+    function getActiveApiKey() {
+      return (state.customApiKey || apiKey || "").trim();
+    }
+
+    function openApiModal() {
+      document.getElementById("custom-api-key-input").value = state.customApiKey;
+      document.getElementById("api-modal").classList.remove("hidden");
+    }
+
+    function closeApiModal() {
+      document.getElementById("api-modal").classList.add("hidden");
+    }
+
+    function saveCustomApiKey() {
+      const val = document.getElementById("custom-api-key-input").value.trim();
+      state.customApiKey = val;
+      state.usingFallbackEngine = false;
+      updateAiModeBadge();
+      closeApiModal();
+      showToast(val ? "API Key guardada para esta sesión." : "Modo Autónomo activo.", "info");
+    }
+
+    function clearCustomApiKey() {
+      state.customApiKey = "";
+      document.getElementById("custom-api-key-input").value = "";
+      updateAiModeBadge();
+      closeApiModal();
+      showToast("Usando Modo Tutor Autónomo (sin API Key).", "info");
+    }
+
+    function updateAiModeBadge() {
+      const label = document.getElementById("ai-mode-label");
+      const dot = document.getElementById("ai-mode-dot");
+      if (getActiveApiKey() && !state.usingFallbackEngine) {
+        label.textContent = "Gemini IA";
+        dot.className = "w-2 h-2 rounded-full bg-indigo-500";
+      } else {
+        label.textContent = "Tutor Autónomo";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+      }
+    }
+
+    // =========================================================================
+    // 2. INITIALIZATION & SPEECH RECOGNITION SETUP
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      initSpeechRecognition();
+      initEnglishVoices();
+      updateAiModeBadge();
+    });
+
+    function initEnglishVoices() {
+      if (!("speechSynthesis" in window)) return;
+      const pickVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || voices.length === 0) return;
+        state.preferredEnglishVoice =
+          voices.find((v) => v.lang === "en-US" && /Samantha|Aria|Jenny|Google US English|Natural/i.test(v.name)) ||
+          voices.find((v) => v.lang === "en-US") ||
+          voices.find((v) => v.lang.startsWith("en")) ||
+          null;
+      };
+      pickVoice();
+      window.speechSynthesis.onvoiceschanged = pickVoice;
+    }
+
+    // Unlock audio & speech synthesis synchronously inside user tap/click for mobile browsers
+    function unlockMobileAudio() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          if (ctx.state === "suspended") ctx.resume();
+        }
+        if ("speechSynthesis" in window) {
+          const silentUtterance = new SpeechSynthesisUtterance(" ");
+          silentUtterance.volume = 0;
+          silentUtterance.lang = "en-US";
+          window.speechSynthesis.speak(silentUtterance);
+        }
+      } catch (e) {
+        // Ignore audio unlock restrictions if any
+      }
+    }
+
+    function initSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const statusEl = document.getElementById("speech-support-status");
+      const micBtn = document.getElementById("mic-btn");
+
+      if (!SpeechRecognition) {
+        statusEl.textContent = "Tu navegador no soporta micrófono web; usa el cuadro de texto.";
+        statusEl.classList.add("text-amber-600");
+        micBtn.disabled = true;
+        micBtn.classList.add("opacity-50", "cursor-not-allowed");
+        return;
+      }
+
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.continuous = !isMobile;
+      recognition.interimResults = true;
+
+      let finalTranscriptAccumulated = "";
+
+      recognition.onstart = () => {
+        state.isRecording = true;
+        finalTranscriptAccumulated = document.getElementById("student-input").value.trim();
+        if (finalTranscriptAccumulated) finalTranscriptAccumulated += " ";
+        updateMicUI(true);
+      };
+
+      recognition.onresult = (event) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscriptAccumulated += transcript + " ";
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        document.getElementById("student-input").value = (finalTranscriptAccumulated + interimTranscript).trim();
+      };
+
+      recognition.onerror = (event) => {
+        if (event.error === "not-allowed") {
+          showToast("Permiso de micrófono denegado. Puedes escribir tu respuesta en inglés.", "warning");
+        } else if (event.error !== "aborted") {
+          showToast("No se detectó voz claramente. Intenta hablar de nuevo o escribe tu respuesta.", "info");
+        }
+        stopRecording();
+      };
+
+      recognition.onend = () => {
+        if (state.isRecording) {
+          stopRecording();
+        }
+      };
+    }
+
+    function toggleRecording() {
+      if (!recognition) {
+        showToast("Usa el cuadro de texto para escribir tu respuesta en inglés.", "info");
+        return;
+      }
+      if (state.isLoading) return;
+
+      if (state.isRecording) {
+        stopRecording();
+      } else {
+        stopCurrentAudio();
+        try {
+          recognition.start();
+        } catch (e) {
+          stopRecording();
+        }
+      }
+    }
+
+    function stopRecording() {
+      state.isRecording = false;
+      updateMicUI(false);
+      if (recognition) {
+        try {
+          recognition.stop();
+        } catch (e) {
+          // Ignore already stopped error
+        }
+      }
+    }
+
+    function updateMicUI(recording) {
+      const micBtn = document.getElementById("mic-btn");
+      const pulseRing = document.getElementById("mic-pulse-ring");
+      const micLabel = document.getElementById("mic-btn-label");
+      const interimBadge = document.getElementById("interim-speech-badge");
+
+      if (recording) {
+        micBtn.classList.remove("bg-rose-600", "hover:bg-rose-700");
+        micBtn.classList.add("bg-slate-900", "hover:bg-slate-800");
+        pulseRing.classList.remove("hidden");
+        micLabel.textContent = "Detener Voz";
+        interimBadge.classList.remove("hidden");
+      } else {
+        micBtn.classList.add("bg-rose-600", "hover:bg-rose-700");
+        micBtn.classList.remove("bg-slate-900", "hover:bg-slate-800");
+        pulseRing.classList.add("hidden");
+        micLabel.textContent = "Hablar (Inglés)";
+        interimBadge.classList.add("hidden");
+      }
+    }
+
+    // =========================================================================
+    // 3. SETUP SELECTION HANDLERS
+    // =========================================================================
+    function selectMajor(btn, majorName) {
+      state.major = majorName;
+      document.querySelectorAll(".major-btn").forEach((el) => {
+        el.classList.remove("border-2", "border-indigo-600", "bg-indigo-50/60");
+        el.classList.add("border", "border-slate-200", "bg-white");
+      });
+      btn.classList.remove("border", "border-slate-200", "bg-white");
+      btn.classList.add("border-2", "border-indigo-600", "bg-indigo-50/60");
+    }
+
+    function selectLevel(btn, levelName) {
+      state.level = levelName;
+      document.querySelectorAll(".level-btn").forEach((el) => {
+        el.classList.remove("border-2", "border-indigo-600", "bg-indigo-50/60");
+        el.classList.add("border", "border-slate-200", "bg-white");
+      });
+      btn.classList.remove("border", "border-slate-200", "bg-white");
+      btn.classList.add("border-2", "border-indigo-600", "bg-indigo-50/60");
+    }
+
+    function toggleAudioOutput() {
+      state.audioEnabled = !state.audioEnabled;
+      const iconOn = document.getElementById("audio-icon-on");
+      const iconOff = document.getElementById("audio-icon-off");
+      const label = document.getElementById("audio-status-label");
+
+      if (state.audioEnabled) {
+        iconOn.classList.remove("hidden");
+        iconOff.classList.add("hidden");
+        label.textContent = "Voz IA Activa";
+        showToast("Voz de la entrevistadora activada", "info");
+      } else {
+        iconOn.classList.add("hidden");
+        iconOff.classList.remove("hidden");
+        label.textContent = "Voz Silenciada";
+        stopCurrentAudio();
+      }
+    }
+
+    // =========================================================================
+    // 4. GEMINI API INTEGRATION (STRUCTURED CONVERSATION + GRAMMAR COACH)
+    // =========================================================================
+    const SYSTEM_PROMPT = `You are Dr. Eleanor Vance, a warm, encouraging, and professional University Admissions Officer conducting a 5-stage admissions speaking interview in English.
+Your pedagogical goal is to help a Spanish-speaking student practice English future forms: "be going to" (for pre-made plans, academic intentions, goals, and present evidence) and "will" (for spontaneous decisions, promises/commitments to the university, offers, and future predictions/opinions).
+
+Rules:
+1. Conduct the interview strictly in English inside "interviewerReply". Adapt vocabulary complexity to the student's chosen CEFR level.
+2. Guide the conversation across 5 natural stages:
+   - Stage 1: Welcome & motivation for choosing their major (elicit "going to" for study plans).
+   - Stage 2: Specific academic projects or campus activities they plan to join (elicit "going to").
+   - Stage 3: Commitments and promises to the university community (elicit "will" — e.g., "How will you contribute when challenges arise?").
+   - Stage 4: Predictions about the future of their field/career (elicit "will" — e.g., "How do you think your field will change in the next 10 years?").
+   - Stage 5: Spontaneous scenario / wrap-up question and warm closing remarks (set isComplete = true after the student answers Stage 5, or if stage reaches 5 and they have answered 5 turns).
+3. Whenever the student provides an answer (hasStudentInput = true):
+   - Analyze their exact phrases using "going to" (including "gonna") and "will" (including "'ll" and "won't").
+   - Evaluate whether they chose the right future form for the context (e.g., gently correct if they used "will" for a long-standing premeditated plan where "going to" is much more natural, or vice versa).
+   - Write "feedbackEs" in clear, friendly Spanish.
+   - Provide "improvedVersion" in natural English showing how an ideal candidate would express their exact ideas using "going to" and/or "will".
+4. Keep "interviewerReply" concise (2-4 sentences max) so it feels like a real spoken conversation.`;
+
+    const RESPONSE_SCHEMA = {
+      type: "OBJECT",
+      properties: {
+        interviewerReply: { type: "STRING" },
+        interviewerReplySpanish: { type: "STRING" },
+        nextQuestionPromptHint: { type: "STRING" },
+        interviewStage: { type: "INTEGER" },
+        isComplete: { type: "BOOLEAN" },
+        evaluation: {
+          type: "OBJECT",
+          properties: {
+            hasStudentInput: { type: "BOOLEAN" },
+            goingToInstances: { type: "ARRAY", items: { type: "STRING" } },
+            willInstances: { type: "ARRAY", items: { type: "STRING" } },
+            accuracyScore: { type: "INTEGER" },
+            feedbackEs: { type: "STRING" },
+            improvedVersion: { type: "STRING" }
+          },
+          required: ["hasStudentInput", "goingToInstances", "willInstances", "accuracyScore", "feedbackEs", "improvedVersion"]
+        }
+      },
+      required: ["interviewerReply", "interviewerReplySpanish", "nextQuestionPromptHint", "interviewStage", "isComplete", "evaluation"]
+    };
+
+    async function fetchWithBackoff(url, options, maxRetries = 3) {
+      let delay = 1000;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, options);
+          if (!response.ok) {
+            if (response.status === 429 || response.status >= 500) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `HTTP ${response.status}`);
+          }
+          return await response.json();
+        } catch (err) {
+          if (attempt === maxRetries) throw err;
+          await new Promise((res) => setTimeout(res, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    async function startInterview() {
+      unlockMobileAudio();
+      state.studentName = document.getElementById("student-name").value.trim() || "Candidate";
+      state.currentStage = 1;
+      state.totalGoingTo = 0;
+      state.totalWill = 0;
+      state.scores = [];
+      state.turnLogs = [];
+      state.conversationHistory = [];
+
+      // Switch UI views
+      document.getElementById("setup-view").classList.add("hidden");
+      document.getElementById("report-view").classList.add("hidden");
+      document.getElementById("interview-view").classList.remove("hidden");
+      document.getElementById("end-interview-btn").classList.remove("hidden");
+
+      document.getElementById("selected-major-badge").textContent = `${state.major} • ${state.level}`;
+      document.getElementById("chat-feed").innerHTML = "";
+      document.getElementById("count-going-to").textContent = "0";
+      document.getElementById("count-will").textContent = "0";
+      document.getElementById("feedback-empty-state").classList.remove("hidden");
+      document.getElementById("feedback-content").classList.add("hidden");
+      document.getElementById("turn-score-badge").classList.add("hidden");
+
+      const initPrompt = `Start the university admissions interview now. Candidate Name: ${state.studentName}. Target Major: ${state.major}. Target Level: ${state.level}. Greet the candidate warmly, introduce yourself briefly as Dr. Eleanor Vance, and ask Stage 1 question about why they chose ${state.major} and what they are going to study or achieve at this university. Set hasStudentInput to false.`;
+
+      state.conversationHistory.push({
+        role: "user",
+        parts: [{ text: initPrompt }]
+      });
+
+      await callTutorTurn();
+    }
+
+    async function submitStudentTurn() {
+      if (state.isLoading) return;
+      if (state.isRecording) stopRecording();
+      unlockMobileAudio();
+
+      const inputEl = document.getElementById("student-input");
+      const studentText = inputEl.value.trim();
+
+      if (!studentText) {
+        showToast("Por favor habla por el micrófono o escribe tu respuesta en inglés.", "warning");
+        return;
+      }
+
+      inputEl.value = "";
+      appendStudentBubble(studentText);
+
+      const previousQuestion = state.lastInterviewerText;
+
+      state.conversationHistory.push({
+        role: "user",
+        parts: [{
+          text: `Student's spoken response: "${studentText}". Evaluate their use of "will" and "going to" in "evaluation" (set hasStudentInput: true), and continue to the next stage of the interview (current stage was ${state.currentStage}). If the student has completed 5 answers, wrap up warmly and set isComplete: true.`
+        }]
+      });
+
+      const data = await callTutorTurn(studentText, previousQuestion);
+      if (data && data.isComplete) {
+        setTimeout(() => {
+          showFinalReport();
+        }, 2800);
+      }
+    }
+
+    async function callTutorTurn(studentText = null, previousQuestion = null) {
+      setLoadingState(true);
+      const typingId = appendTypingIndicator();
+
+      const activeKey = getActiveApiKey();
+
+      // If no API key is present (e.g., opened on another device outside Canvas), use built-in Smart Tutor
+      if (!activeKey) {
+        state.usingFallbackEngine = true;
+        updateAiModeBadge();
+        await new Promise((r) => setTimeout(r, 450));
+        removeTypingIndicator(typingId);
+        const localData = generateLocalTutorTurn(studentText);
+        applyTurnResponse(localData, studentText, previousQuestion);
+        setLoadingState(false);
+        return localData;
+      }
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${activeKey}`;
+        const payload = {
+          contents: state.conversationHistory,
+          systemInstruction: {
+            parts: [{ text: SYSTEM_PROMPT }]
+          },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: RESPONSE_SCHEMA,
+            temperature: 0.7
+          }
+        };
+
+        const result = await fetchWithBackoff(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        removeTypingIndicator(typingId);
+
+        const rawJsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJsonText) throw new Error("Respuesta vacía del modelo.");
+
+        const data = JSON.parse(rawJsonText);
+
+        // Save assistant turn to history
+        state.conversationHistory.push({
+          role: "model",
+          parts: [{ text: rawJsonText }]
+        });
+
+        state.usingFallbackEngine = false;
+        updateAiModeBadge();
+        applyTurnResponse(data, studentText, previousQuestion);
+        setLoadingState(false);
+        return data;
+
+      } catch (error) {
+        removeTypingIndicator(typingId);
+        // Automatic seamless fallback to built-in Smart Tutor on external devices
+        state.usingFallbackEngine = true;
+        updateAiModeBadge();
+        const localData = generateLocalTutorTurn(studentText);
+        applyTurnResponse(localData, studentText, previousQuestion);
+        setLoadingState(false);
+        return localData;
+      }
+    }
+
+    function applyTurnResponse(data, studentText, previousQuestion) {
+      state.currentStage = Math.min(5, Math.max(1, data.interviewStage || state.currentStage));
+      state.lastInterviewerText = data.interviewerReply;
+
+      updateStageProgress(state.currentStage);
+      appendInterviewerBubble(data.interviewerReply, data.interviewerReplySpanish);
+      document.getElementById("hint-text").textContent = data.nextQuestionPromptHint;
+
+      if (data.evaluation && data.evaluation.hasStudentInput && studentText) {
+        processEvaluation(data.evaluation, studentText, previousQuestion);
+      }
+
+      if (state.audioEnabled) {
+        speakEnglishText(data.interviewerReply);
+      }
+    }
+
+    // Built-in Smart Tutor Engine (Works 100% offline / on any mobile or external device)
+    function generateLocalTutorTurn(studentText) {
+      const majorMap = {
+        "Computer Science & Artificial Intelligence": {
+          topic: "artificial intelligence and software engineering",
+          club: "the AI & Robotics Research Lab",
+          field: "technology and AI"
+        },
+        "Medicine & Biomedical Sciences": {
+          topic: "medicine and patient care",
+          club: "the Biomedical Innovation Society",
+          field: "healthcare and medicine"
+        },
+        "International Business & Economics": {
+          topic: "global business and economics",
+          club: "the Global Entrepreneurship Incubator",
+          field: "international markets"
+        },
+        "Architecture, Design & Sustainability": {
+          topic: "sustainable architecture and urban design",
+          club: "the Green Urbanism Studio",
+          field: "sustainable architecture"
+        }
+      };
+
+      const ctx = majorMap[state.major] || majorMap["Computer Science & Artificial Intelligence"];
+      const isB2 = state.level.includes("B2");
+
+      const stages = [
+        {
+          en: `Hello ${state.studentName}! Welcome to our university admissions interview. I'm Dr. Eleanor Vance. To begin, why did you choose ${ctx.topic}, and what are you going to focus on during your first year here?`,
+          es: `¡Hola ${state.studentName}! Bienvenido a nuestra entrevista de admisión universitaria. Soy la Dra. Eleanor Vance. Para empezar, ¿por qué elegiste ${ctx.topic} y en qué te vas a enfocar durante tu primer año aquí?`,
+          hint: `Usa "I am going to..." para hablar de tus planes académicos ya decididos (ej. "I am going to focus on...").`,
+          sample: `I chose this major because I love problem-solving, and I am going to focus on practical research during my first year.`
+        },
+        {
+          en: `That is a very clear academic plan. Beyond your classes, how are you going to get involved on campus? For example, are you going to join ${ctx.club}?`,
+          es: `Ese es un plan académico muy claro. Más allá de tus clases, ¿cómo te vas a involucrar en el campus? Por ejemplo, ¿vas a unirte a ${ctx.club}?`,
+          hint: `Responde usando "I'm going to join..." o "I'm going to participate in..." para describir tus intenciones en el campus.`,
+          sample: `Yes, I am going to join ${ctx.club} because I want to collaborate with other students on real projects.`
+        },
+        {
+          en: `Wonderful! University life also brings unexpected academic challenges. As a member of our community, what promises or commitments will you make when courses get demanding?`,
+          es: `¡Maravilloso! La vida universitaria también trae retos académicos inesperados. Como miembro de nuestra comunidad, ¿qué promesas o compromisos harás cuando los cursos se vuelvan exigentes?`,
+          hint: `Aquí es ideal usar "I will..." o "I promise I will..." para hacer promesas y compromisos firmes.`,
+          sample: `When courses get challenging, I promise I will stay disciplined, ask professors for feedback, and help my classmates.`
+        },
+        {
+          en: isB2
+            ? `I appreciate that commitment. Looking ahead ten years, how do you predict ${ctx.field} will transform, and what role will you play in that future?`
+            : `I appreciate that commitment. Looking ahead ten years, how do you think ${ctx.field} will change in the future?`,
+          es: `Aprecio ese compromiso. Mirando diez años hacia adelante, ¿cómo crees que cambiará ${ctx.field} en el futuro?`,
+          hint: `Usa "I think ... will..." o "It will..." para expresar predicciones y opiniones sobre el futuro.`,
+          sample: `I believe ${ctx.field} will become much more innovative, and I will work hard to create positive solutions.`
+        },
+        {
+          en: `Imagine we offer you a scholarship today! How will you celebrate right after this call, and what is the first thing you are going to prepare for your move to campus?`,
+          es: `¡Imagina que hoy te ofrecemos una beca! ¿Cómo lo celebrarás justo después de esta llamada (decisión espontánea) y qué es lo primero que vas a preparar para mudarte al campus (plan)?`,
+          hint: `¡Combina ambos! Usa "I'll..." para tu reacción espontánea hoy y "I'm going to..." para lo que ya planeas preparar.`,
+          sample: `If I get the scholarship, I'll call my family right away to celebrate, and then I'm going to organize all my study materials.`
+        }
+      ];
+
+      // Initial greeting (no student input yet)
+      if (!studentText) {
+        const s1 = stages[0];
+        return {
+          interviewerReply: s1.en,
+          interviewerReplySpanish: s1.es,
+          nextQuestionPromptHint: s1.hint,
+          interviewStage: 1,
+          isComplete: false,
+          evaluation: {
+            hasStudentInput: false,
+            goingToInstances: [],
+            willInstances: [],
+            accuracyScore: 100,
+            feedbackEs: "",
+            improvedVersion: ""
+          }
+        };
+      }
+
+      // Analyze student's English response for "going to" and "will"
+      const goingToMatches = studentText.match(/\b(?:am|is|are|'m|'re|'s)?\s*(?:not\s+)?(?:going to|gonna)\s+[a-z]+/gi) || [];
+      const willMatches = studentText.match(/\b(?:will|won't|'ll)\s+[a-z]+/gi) || [];
+
+      const askedStage = state.currentStage;
+      const nextStageIndex = Math.min(4, askedStage); // 0-indexed for next question
+      const isLastTurn = askedStage >= 5;
+
+      let score = 65;
+      let feedbackEs = "";
+
+      if (goingToMatches.length > 0 || willMatches.length > 0) {
+        score += 20;
+        if ((askedStage === 1 || askedStage === 2) && goingToMatches.length > 0) {
+          score += 15;
+          feedbackEs = `¡Excelente! Usaste "${goingToMatches[0].trim()}" correctamente para expresar un plan o intención académica previa.`;
+        } else if ((askedStage === 3 || askedStage === 4) && willMatches.length > 0) {
+          score += 15;
+          feedbackEs = `¡Muy bien! Empleaste "${willMatches[0].trim()}" de forma natural para expresar un compromiso o predicción futura.`;
+        } else if (askedStage === 5 && goingToMatches.length > 0 && willMatches.length > 0) {
+          score = 98;
+          feedbackEs = `¡Sobresaliente! Combinaste "will" para una decisión espontánea y "going to" para un plan concreto en la misma respuesta.`;
+        } else if ((askedStage === 1 || askedStage === 2) && willMatches.length > 0 && goingToMatches.length === 0) {
+          feedbackEs = `Usaste "${willMatches[0].trim()}", lo cual es comprensible, pero para planes universitarios que ya decidiste antes de la entrevista suena más natural usar "I am going to...".`;
+        } else if ((askedStage === 3 || askedStage === 4) && goingToMatches.length > 0 && willMatches.length === 0) {
+          feedbackEs = `Usaste "${goingToMatches[0].trim()}". Para promesas en el momento o predicciones generales sobre tu carrera, intenta usar también "I will...".`;
+        } else {
+          score += 10;
+          feedbackEs = `¡Buen trabajo usando estructuras de futuro en inglés! Sigue articulando tus ideas con claridad.`;
+        }
+      } else {
+        score = 60;
+        feedbackEs = `Tu respuesta se entiende bien, pero no detecté "going to" ni "will". Intenta incluir explícitamente "I am going to..." para planes o "I will..." para promesas y predicciones.`;
+      }
+
+      const currentStageObj = stages[Math.min(4, askedStage - 1)];
+      const nextStageObj = stages[nextStageIndex];
+
+      return {
+        interviewerReply: isLastTurn
+          ? `Thank you so much, ${state.studentName}! You expressed your future goals and commitments with great clarity. We will review your application soon—best of luck!`
+          : nextStageObj.en,
+        interviewerReplySpanish: isLastTurn
+          ? `¡Muchas gracias, ${state.studentName}! Expresaste tus metas futuras y compromisos con gran claridad. Revisaremos tu solicitud pronto, ¡mucho éxito!`
+          : nextStageObj.es,
+        nextQuestionPromptHint: isLastTurn
+          ? `Entrevista finalizada. Revisa tu reporte completo de desempeño.`
+          : nextStageObj.hint,
+        interviewStage: isLastTurn ? 5 : askedStage + 1,
+        isComplete: isLastTurn,
+        evaluation: {
+          hasStudentInput: true,
+          goingToInstances: goingToMatches.map((m) => m.trim()),
+          willInstances: willMatches.map((m) => m.trim()),
+          accuracyScore: Math.min(100, score),
+          feedbackEs,
+          improvedVersion: currentStageObj.sample
+        }
+      };
+    }
+
+    // =========================================================================
+    // 5. TEXT-TO-SPEECH (GEMINI 2.5 FLASH TTS + BROWSER FALLBACK)
+    // =========================================================================
+    async function speakEnglishText(text) {
+      if (!text) return;
+      stopCurrentAudio();
+      setSpeakingVisual(true);
+
+      const activeKey = getActiveApiKey();
+      if (!activeKey || state.usingFallbackEngine) {
+        fallbackBrowserTTS(text);
+        return;
+      }
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${activeKey}`;
+        const payload = {
+          contents: state.conversationHistory,
+          systemInstruction: {
+            parts: [{ text: SYSTEM_PROMPT }]
+          },
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: RESPONSE_SCHEMA,
+            temperature: 0.7
+          }
+        };
+
+        const result = await fetchWithBackoff(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        removeTypingIndicator(typingId);
+
+        const rawJsonText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJsonText) throw new Error("Respuesta vacía del modelo.");
+
+        const data = JSON.parse(rawJsonText);
+
+        // Save assistant turn to history
+        state.conversationHistory.push({
+          role: "model",
+          parts: [{ text: rawJsonText }]
+        });
+
+        // Update state
+        state.currentStage = Math.min(5, Math.max(1, data.interviewStage || state.currentStage));
+        state.lastInterviewerText = data.interviewerReply;
+
+        updateStageProgress(state.currentStage);
+        appendInterviewerBubble(data.interviewerReply, data.interviewerReplySpanish);
+        document.getElementById("hint-text").textContent = data.nextQuestionPromptHint;
+
+        // Process evaluation if student answered
+        if (data.evaluation && data.evaluation.hasStudentInput && studentText) {
+          processEvaluation(data.evaluation, studentText, previousQuestion);
+        }
+
+        // Speak the interviewer's response aloud
+        if (state.audioEnabled) {
+          speakEnglishText(data.interviewerReply);
+        }
+
+        setLoadingState(false);
+        return data;
+
+      } catch (error) {
+        removeTypingIndicator(typingId);
+        setLoadingState(false);
+        showToast("Hubo un problema de conexión con el tutor IA. Intenta enviar de nuevo.", "error");
+        return null;
+      }
+    }
+
+    function processEvaluation(evalData, studentText, previousQuestion) {
+      const goingToList = evalData.goingToInstances || [];
+      const willList = evalData.willInstances || [];
+      const score = typeof evalData.accuracyScore === "number" ? evalData.accuracyScore : 80;
+
+      state.totalGoingTo += goingToList.length;
+      state.totalWill += willList.length;
+      state.scores.push(score);
+      state.lastImprovedVersion = evalData.improvedVersion || "";
+
+      state.turnLogs.push({
+        question: previousQuestion,
+        studentAnswer: studentText,
+        goingToList,
+        willList,
+        score,
+        feedbackEs: evalData.feedbackEs,
+        improvedVersion: evalData.improvedVersion
+      });
+
+      // Update Counters
+      document.getElementById("count-going-to").textContent = state.totalGoingTo;
+      document.getElementById("count-will").textContent = state.totalWill;
+
+      // Update Score Pill
+      const scoreBadge = document.getElementById("turn-score-badge");
+      scoreBadge.textContent = `${score} / 100`;
+      scoreBadge.classList.remove("hidden");
+
+      // Show Feedback Card
+      document.getElementById("feedback-empty-state").classList.add("hidden");
+      document.getElementById("feedback-content").classList.remove("hidden");
+
+      // Render Detected Chips
+      const chipsContainer = document.getElementById("detected-chips-container");
+      chipsContainer.innerHTML = "";
+
+      goingToList.forEach((phrase) => {
+        const chip = document.createElement("span");
+        chip.className = "px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-xs font-semibold";
+        chip.textContent = `✓ going to: "${phrase}"`;
+        chipsContainer.appendChild(chip);
+      });
+
+      willList.forEach((phrase) => {
+        const chip = document.createElement("span");
+        chip.className = "px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-xs font-semibold";
+        chip.textContent = `✓ will: "${phrase}"`;
+        chipsContainer.appendChild(chip);
+      });
+
+      if (goingToList.length === 0 && willList.length === 0) {
+        const chip = document.createElement("span");
+        chip.className = "px-2.5 py-1 rounded-lg bg-rose-100 text-rose-800 text-xs font-semibold";
+        chip.textContent = "Sin uso de will / going to detectado";
+        chipsContainer.appendChild(chip);
+      }
+
+      document.getElementById("feedback-es-text").textContent = evalData.feedbackEs;
+      document.getElementById("improved-version-text").textContent = `"${evalData.improvedVersion}"`;
+    }
+
+    // =========================================================================
+    // 5. TEXT-TO-SPEECH (GEMINI 2.5 FLASH TTS + BROWSER FALLBACK)
+    // =========================================================================
+    async function speakEnglishText(text) {
+      if (!text) return;
+      stopCurrentAudio();
+      setSpeakingVisual(true);
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${apiKey}`;
+        const payload = {
+          contents: [{
+            parts: [{ text: `Say in a warm, clear, encouraging American university admissions interviewer voice: ${text}` }]
+          }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: "Aoede" }
+              }
+            }
+          },
+          model: TTS_MODEL
+        };
+
+        const result = await fetchWithBackoff(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }, 1);
+
+        const part = result?.candidates?.[0]?.content?.parts?.[0];
+        const audioData = part?.inlineData?.data;
+        const mimeType = part?.inlineData?.mimeType;
+
+        if (audioData && mimeType && mimeType.startsWith("audio/")) {
+          const rateMatch = mimeType.match(/rate=(\d+)/);
+          const sampleRate = rateMatch ? parseInt(rateMatch[1], 10) : 24000;
+          const pcmBuffer = base64ToArrayBuffer(audioData);
+          const pcm16 = new Int16Array(pcmBuffer);
+          const wavBlob = pcmToWav(pcm16, sampleRate);
+          const audioUrl = URL.createObjectURL(wavBlob);
+
+          currentAudioElement = new Audio(audioUrl);
+          currentAudioElement.onended = () => {
+            setSpeakingVisual(false);
+            URL.revokeObjectURL(audioUrl);
+          };
+          currentAudioElement.onerror = () => {
+            setSpeakingVisual(false);
+          };
+          await currentAudioElement.play();
+          return;
+        }
+        throw new Error("TTS fallback needed");
+      } catch (e) {
+        // Fallback to native Web Speech Synthesis
+        fallbackBrowserTTS(text);
+      }
+    }
+
+    function fallbackBrowserTTS(text) {
+      if (!("speechSynthesis" in window)) {
+        setSpeakingVisual(false);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      if (state.preferredEnglishVoice) {
+        utterance.voice = state.preferredEnglishVoice;
+      }
+      utterance.rate = 0.96;
+      utterance.onend = () => setSpeakingVisual(false);
+      utterance.onerror = () => setSpeakingVisual(false);
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function stopCurrentAudio() {
+      if (currentAudioElement) {
+        currentAudioElement.pause();
+        currentAudioElement = null;
+      }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setSpeakingVisual(false);
+    }
+
+    function replayLastQuestion() {
+      if (state.lastInterviewerText) {
+        speakEnglishText(state.lastInterviewerText);
+      }
+    }
+
+    function speakImprovedVersion() {
+      if (state.lastImprovedVersion) {
+        speakEnglishText(state.lastImprovedVersion);
+      }
+    }
+
+    function setSpeakingVisual(isSpeaking) {
+      const indicator = document.getElementById("speaking-indicator");
+      if (isSpeaking) {
+        indicator.classList.remove("hidden");
+        indicator.classList.add("flex");
+      } else {
+        indicator.classList.add("hidden");
+        indicator.classList.remove("flex");
+      }
+    }
+
+    // PCM16 to WAV Container Converter
+    function base64ToArrayBuffer(base64) {
+      const binaryString = atob(base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+
+    function pcmToWav(pcm16IntArray, sampleRate) {
+      const numChannels = 1;
+      const bytesPerSample = 2;
+      const blockAlign = numChannels * bytesPerSample;
+      const byteRate = sampleRate * blockAlign;
+      const dataSize = pcm16IntArray.length * bytesPerSample;
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+
+      function writeString(offset, str) {
+        for (let i = 0; i < str.length; i++) {
+          view.setUint8(offset + i, str.charCodeAt(i));
+        }
+      }
+
+      writeString(0, "RIFF");
+      view.setUint32(4, 36 + dataSize, true);
+      writeString(8, "WAVE");
+      writeString(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true); // PCM
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, 16, true); // 16-bit
+      writeString(36, "data");
+      view.setUint32(40, dataSize, true);
+
+      let offset = 44;
+      for (let i = 0; i < pcm16IntArray.length; i++, offset += 2) {
+        view.setInt16(offset, pcm16IntArray[i], true);
+      }
+
+      return new Blob([buffer], { type: "audio/wav" });
+    }
+
+    // =========================================================================
+    // 6. UI CHAT RENDERING & REPORT HELPERS
+    // =========================================================================
+    function appendInterviewerBubble(englishText, spanishTranslation) {
+      const feed = document.getElementById("chat-feed");
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex items-start gap-3";
+
+      const translationId = "trans-" + Date.now() + Math.random().toString(36).substring(2, 6);
+
+      wrapper.innerHTML = `
+        <div class="w-9 h-9 rounded-xl bg-indigo-900 text-white font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+          EV
+        </div>
+        <div class="flex-1 max-w-[88%] space-y-1.5">
+          <div class="bg-slate-100 text-slate-900 rounded-2xl rounded-tl-sm px-4 py-3 text-sm leading-relaxed shadow-2xs">
+            <p>${escapeHTML(englishText)}</p>
+            <p id="${translationId}" class="hidden mt-2 pt-2 border-t border-slate-200/80 text-xs text-slate-600 italic">
+              ${escapeHTML(spanishTranslation || "")}
+            </p>
+          </div>
+          <div class="flex items-center gap-3 px-1">
+            <button type="button" onclick="speakEnglishText(${JSON.stringify(englishText)})" class="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800">
+              🔊 Escuchar
+            </button>
+            <button type="button" onclick="document.getElementById('${translationId}').classList.toggle('hidden')" class="text-[11px] font-medium text-slate-500 hover:text-slate-700">
+              🌐 Traducir al español
+            </button>
+          </div>
+        </div>
+      `;
+
+      feed.appendChild(wrapper);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function appendStudentBubble(text) {
+      const feed = document.getElementById("chat-feed");
+      const wrapper = document.createElement("div");
+      wrapper.className = "flex items-start justify-end gap-3";
+
+      // Highlight 'going to' and 'will' visually in the student's message
+      const highlightedHTML = highlightFutureForms(escapeHTML(text));
+
+      wrapper.innerHTML = `
+        <div class="max-w-[85%] bg-indigo-600 text-white rounded-2xl rounded-tr-sm px-4 py-3 text-sm leading-relaxed shadow-xs">
+          <p>${highlightedHTML}</p>
+        </div>
+      `;
+
+      feed.appendChild(wrapper);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function highlightFutureForms(safeHtmlText) {
+      // Highlight "going to" / "gonna" in emerald pill, "will" / "'ll" / "won't" in amber pill
+      let formatted = safeHtmlText.replace(
+        /\b(going to|gonna)\b/gi,
+        '<span class="px-1.5 py-0.5 rounded bg-emerald-400/30 text-emerald-100 font-bold underline decoration-emerald-300">$1</span>'
+      );
+      formatted = formatted.replace(
+        /\b(will|won't)\b|('ll)\b/gi,
+        '<span class="px-1.5 py-0.5 rounded bg-amber-400/30 text-amber-100 font-bold underline decoration-amber-300">$&</span>'
+      );
+      return formatted;
+    }
+
+    function appendTypingIndicator() {
+      const feed = document.getElementById("chat-feed");
+      const id = "typing-" + Date.now();
+      const div = document.createElement("div");
+      div.id = id;
+      div.className = "flex items-center gap-2 text-xs text-slate-400 px-2";
+      div.innerHTML = `
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-bounce"></span>
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style="animation-delay: 0.15s"></span>
+        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-bounce" style="animation-delay: 0.3s"></span>
+        <span>Dr. Vance está evaluando tu respuesta...</span>
+      `;
+      feed.appendChild(div);
+      feed.scrollTop = feed.scrollHeight;
+      return id;
+    }
+
+    function removeTypingIndicator(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function updateStageProgress(stage) {
+      document.getElementById("stage-badge").textContent = `${stage} / 5`;
+      const pct = Math.min(100, Math.max(20, stage * 20));
+      document.getElementById("stage-progress-bar").style.width = `${pct}%`;
+    }
+
+    function setLoadingState(loading) {
+      state.isLoading = loading;
+      document.getElementById("send-btn").disabled = loading;
+    }
+
+    function finishInterviewEarly() {
+      stopRecording();
+      stopCurrentAudio();
+      showFinalReport();
+    }
+
+    function showFinalReport() {
+      document.getElementById("interview-view").classList.add("hidden");
+      document.getElementById("end-interview-btn").classList.add("hidden");
+      document.getElementById("report-view").classList.remove("hidden");
+
+      const avgScore = state.scores.length
+        ? Math.round(state.scores.reduce((a, b) => a + b, 0) / state.scores.length)
+        : 0;
+
+      document.getElementById("final-score-value").textContent = `${avgScore}%`;
+      document.getElementById("report-going-to").textContent = state.totalGoingTo;
+      document.getElementById("report-will").textContent = state.totalWill;
+      document.getElementById("report-turns").textContent = state.turnLogs.length;
+      document.getElementById("report-subtitle").textContent = `${state.studentName} • ${state.major} (${state.level})`;
+
+      const listEl = document.getElementById("report-history-list");
+      listEl.innerHTML = "";
+
+      if (state.turnLogs.length === 0) {
+        listEl.innerHTML = `<p class="text-sm text-slate-500 bg-slate-50 p-4 rounded-2xl">Aún no registraste respuestas habladas en esta sesión.</p>`;
+        return;
+      }
+
+      state.turnLogs.forEach((log, idx) => {
+        const card = document.createElement("div");
+        card.className = "p-4 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-2";
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-indigo-700">Pregunta ${idx + 1}</span>
+            <span class="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-xs font-bold text-slate-700">Precisión: ${log.score}/100</span>
+          </div>
+          <p class="text-xs text-slate-500 italic">"${escapeHTML(log.question || "")}"</p>
+          <p class="text-sm font-medium text-slate-900">Tu respuesta: "${escapeHTML(log.studentAnswer)}"</p>
+          <p class="text-xs text-slate-700 bg-white p-3 rounded-xl border border-slate-200/80">${escapeHTML(log.feedbackEs)}</p>
+          <p class="text-xs text-indigo-900 font-medium">✨ Versión sugerida: <em>"${escapeHTML(log.improvedVersion)}"</em></p>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    function resetToSetup() {
+      stopRecording();
+      stopCurrentAudio();
+      document.getElementById("report-view").classList.add("hidden");
+      document.getElementById("interview-view").classList.add("hidden");
+      document.getElementById("end-interview-btn").classList.add("hidden");
+      document.getElementById("setup-view").classList.remove("hidden");
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const styles = {
+        info: "bg-slate-900 text-white",
+        warning: "bg-amber-600 text-white",
+        error: "bg-rose-600 text-white"
+      };
+      toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-lg text-xs sm:text-sm font-medium transition-all ${styles[type] || styles.info}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "translate-y-1");
+        setTimeout(() => toast.remove(), 300);
+      }, 3800);
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+  </script>
+</body>
+</html>
